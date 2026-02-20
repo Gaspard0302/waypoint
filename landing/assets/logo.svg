@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 36" fill="none" role="img" aria-label="Waypoint">
+  <!-- Map pin / cursor hybrid icon -->
+  <g>
+    <!-- Pin body -->
+    <path d="M14 2C9.582 2 6 5.582 6 10c0 6.627 8 16 8 16s8-9.373 8-16c0-4.418-3.582-8-8-8z" fill="#00e5ff" opacity="0.15"/>
+    <path d="M14 2C9.582 2 6 5.582 6 10c0 6.627 8 16 8 16s8-9.373 8-16c0-4.418-3.582-8-8-8z" stroke="#00e5ff" stroke-width="1.5"/>
+    <!-- Cursor arrow inside pin -->
+    <path d="M11 8l7 3.5-3.5 1L13 16l-2-8z" fill="#00e5ff"/>
+    <!-- Inner dot -->
+    <circle cx="14" cy="10" r="2" fill="#00e5ff" opacity="0.6"/>
+  </g>
+
+  <!-- Wordmark: "way" in text-primary, "point" in cyan -->
+  <text x="30" y="24" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-0.03em" fill="#f0f6ff">way</text>
+  <text x="73" y="24" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="20" letter-spacing="-0.03em" fill="#00e5ff">point</text>
+</svg>

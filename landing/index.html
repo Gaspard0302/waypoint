@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waypoint — AI Navigation for Your Website</title>
+  <meta name="description" content="Add one script tag. Let visitors navigate your site by asking. Waypoint is the embeddable AI agent that takes real UI actions — navigates pages, clicks buttons — not just text responses." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===================== CANVAS STARFIELD ===================== -->
+<canvas id="starfield" aria-hidden="true"></canvas>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+  <div class="navbar__inner">
+    <a href="#" class="navbar__logo" aria-label="Waypoint home">
+      <img src="assets/logo.svg" alt="Waypoint" width="140" height="28" />
+    </a>
+    <ul class="navbar__links" role="list">
+      <li><a href="#how-it-works" class="navbar__link">Docs</a></li>
+      <li><a href="#integration" class="navbar__link">Pricing</a></li>
+      <li><a href="https://github.com" class="navbar__link" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+    <a href="#waitlist" class="btn btn--primary btn--sm navbar__cta">Get early access</a>
+    <button class="navbar__hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile drawer -->
+<div class="mobile-drawer" id="mobile-drawer" role="dialog" aria-label="Navigation menu" aria-hidden="true">
+  <div class="mobile-drawer__inner">
+    <button class="mobile-drawer__close" id="drawer-close" aria-label="Close menu">✕</button>
+    <ul role="list">
+      <li><a href="#how-it-works" class="mobile-drawer__link">Docs</a></li>
+      <li><a href="#integration" class="mobile-drawer__link">Pricing</a></li>
+      <li><a href="https://github.com" class="mobile-drawer__link" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="#waitlist" class="btn btn--primary mobile-drawer__cta">Get early access</a></li>
+    </ul>
+  </div>
+</div>
+<div class="mobile-overlay" id="mobile-overlay" aria-hidden="true"></div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero" aria-labelledby="hero-headline">
+  <div class="hero__grid">
+    <!-- Left column -->
+    <div class="hero__content">
+      <div class="hero__badge" role="note">
+        <span class="badge-dot" aria-hidden="true"></span>
+        <span class="badge-text">AI · Action · Not Just Text</span>
+      </div>
+
+      <h1 class="hero__headline" id="hero-headline">
+        Your website,<br />
+        <span class="hero__headline--gradient">navigated</span> by AI.
+      </h1>
+
+      <p class="hero__sub">
+        Add one <code>&lt;script&gt;</code> tag. Your visitors ask in natural language —
+        "how do I upgrade my plan?" — and Waypoint <strong>does it</strong>:
+        navigates to the right page, clicks the right button.
+        No chatbot. Real actions.
+      </p>
+
+      <div class="hero__ctas">
+        <a href="#waitlist" class="btn btn--primary btn--lg">Get early access</a>
+        <a href="#how-it-works" class="btn btn--ghost btn--lg">See how it works ↓</a>
+      </div>
+
+      <p class="hero__trust">
+        <span class="trust-mono">// Drop-in. Framework-agnostic. &lt; 50ms action latency.</span>
+      </p>
+    </div>
+
+    <!-- Right column — browser mockup -->
+    <div class="hero__mockup" id="hero-mockup" aria-label="Live demo preview" role="img">
+      <div class="browser-chrome">
+        <div class="browser-chrome__bar">
+          <span class="browser-dot browser-dot--red"></span>
+          <span class="browser-dot browser-dot--yellow"></span>
+          <span class="browser-dot browser-dot--green"></span>
+          <span class="browser-url" id="hero-url-bar">acme.app/dashboard</span>
+        </div>
+        <div class="browser-viewport">
+          <!-- Fake Acme SaaS layout -->
+          <div class="acme-layout">
+            <aside class="acme-sidebar">
+              <div class="acme-sidebar__logo">Acme</div>
+              <nav class="acme-nav" aria-label="Acme navigation">
+                <a href="#" class="acme-nav__item acme-nav__item--active" id="acme-nav-dashboard">Dashboard</a>
+                <a href="#" class="acme-nav__item" id="acme-nav-billing">Billing</a>
+                <a href="#" class="acme-nav__item" id="acme-nav-profile">Profile</a>
+                <a href="#" class="acme-nav__item" id="acme-nav-settings">Settings</a>
+                <a href="#" class="acme-nav__item" id="acme-nav-team">Team</a>
+              </nav>
+            </aside>
+            <main class="acme-content" id="acme-content-area">
+              <h2 class="acme-content__title" id="acme-content-title">Dashboard</h2>
+              <div class="acme-content__body">
+                <div class="acme-card acme-card--metric">
+                  <span class="acme-metric-label">Active sessions</span>
+                  <span class="acme-metric-value">2,847</span>
+                </div>
+                <div class="acme-card acme-card--metric">
+                  <span class="acme-metric-label">Actions today</span>
+                  <span class="acme-metric-value">14.2k</span>
+                </div>
+              </div>
+            </main>
+          </div>
+
+          <!-- Waypoint widget -->
+          <div class="wp-widget" id="hero-widget">
+            <button class="wp-bubble" id="hero-bubble" aria-label="Open Waypoint assistant" aria-expanded="false">
+              <span class="wp-bubble__ring" aria-hidden="true"></span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2C7.03 2 3 6.03 3 11c0 2.39.86 4.57 2.28 6.27L4 22l4.86-1.28C10.44 21.55 11.2 21.7 12 21.7c4.97 0 9-4.03 9-9s-4.03-10.7-9-10.7z" fill="#00e5ff" opacity="0.9"/>
+                <path d="M8 10h8M8 14h5" stroke="#040812" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+
+            <div class="wp-panel" id="hero-panel" aria-label="Waypoint chat" aria-hidden="true">
+              <div class="wp-panel__header">
+                <span class="wp-panel__title">Waypoint</span>
+                <span class="wp-panel__badge">AI</span>
+              </div>
+              <div class="wp-panel__messages" id="hero-messages" aria-live="polite" aria-atomic="false">
+                <div class="wp-msg wp-msg--agent">
+                  <span class="wp-msg__text">Hi! Where would you like to go?</span>
+                </div>
+              </div>
+              <div class="wp-panel__input-row">
+                <span class="wp-input-display" id="hero-input-display" aria-label="User input"></span>
+                <span class="wp-cursor" aria-hidden="true">|</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STATS BAR ===================== -->
+<section class="stats" aria-label="Key metrics">
+  <div class="stats__inner">
+    <div class="stats__item will-animate" data-delay="0">
+      <span class="stats__number" data-count="4700" data-suffix="%">0%</span>
+      <span class="stats__label">YoY AI agent traffic growth<br/><small>(Adobe Analytics, 2025)</small></span>
+    </div>
+    <div class="stats__divider" aria-hidden="true"></div>
+    <div class="stats__item will-animate" data-delay="100">
+      <span class="stats__number stats__number--mono">&lt; 50ms</span>
+      <span class="stats__label">Action latency<br/><small>Pre-indexed, no real-time vision</small></span>
+    </div>
+    <div class="stats__divider" aria-hidden="true"></div>
+    <div class="stats__item will-animate" data-delay="200">
+      <span class="stats__number">Any stack</span>
+      <span class="stats__label">React · Next.js · Vue · Vanilla<br/><small>One script tag, zero config</small></span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section class="steps" id="how-it-works" aria-labelledby="steps-title">
+  <div class="steps__inner">
+    <div class="section-label will-animate">How It Works</div>
+    <h2 class="section-title will-animate" id="steps-title">
+      From script tag to<br />AI navigation in minutes.
+    </h2>
+
+    <div class="steps__grid">
+
+      <!-- Step 01 -->
+      <article class="step-card will-animate glass-card" data-delay="0" aria-labelledby="step1-title">
+        <div class="step-card__number" aria-hidden="true">01</div>
+        <h3 class="step-card__title" id="step1-title">Paste one line</h3>
+        <p class="step-card__desc">Drop the script tag into your <code>&lt;head&gt;</code>. Works on any site — React, Next.js, Vue, plain HTML.</p>
+        <div class="code-snippet" role="group" aria-label="Script tag code">
+          <pre class="code-snippet__code"><code id="snippet-code">&lt;script
+  src="https://cdn.waypoint.ai/v1.js"
+  data-key="<span class="token-string">your-api-key</span>"
+  defer
+&gt;&lt;/script&gt;</code></pre>
+          <button class="code-snippet__copy" data-copy="snippet-code" aria-label="Copy code snippet">Copy</button>
+        </div>
+      </article>
+
+      <!-- Arrow -->
+      <div class="steps__arrow steps__arrow--1" aria-hidden="true">
+        <svg width="60" height="24" viewBox="0 0 60 24" fill="none">
+          <path d="M2 12h52M44 4l12 8-12 8" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        </svg>
+      </div>
+
+      <!-- Step 02 -->
+      <article class="step-card will-animate glass-card" data-delay="100" aria-labelledby="step2-title">
+        <div class="step-card__number" aria-hidden="true">02</div>
+        <h3 class="step-card__title" id="step2-title">We index your site</h3>
+        <p class="step-card__desc">Our crawler maps every page, button, and link — building a compact action graph. Re-indexes automatically on deploy.</p>
+        <div class="crawl-demo" aria-label="Indexing progress animation">
+          <div class="crawl-row">
+            <span class="crawl-label">/dashboard</span>
+            <div class="crawl-bar-wrap"><div class="crawl-bar" style="animation-delay: 0s"></div></div>
+            <span class="crawl-check">✓</span>
+          </div>
+          <div class="crawl-row">
+            <span class="crawl-label">/settings/billing</span>
+            <div class="crawl-bar-wrap"><div class="crawl-bar" style="animation-delay: 0.4s"></div></div>
+            <span class="crawl-check">✓</span>
+          </div>
+          <div class="crawl-row">
+            <span class="crawl-label">/pricing</span>
+            <div class="crawl-bar-wrap"><div class="crawl-bar" style="animation-delay: 0.8s"></div></div>
+            <span class="crawl-check">✓</span>
+          </div>
+          <div class="crawl-row">
+            <span class="crawl-label">/team</span>
+            <div class="crawl-bar-wrap"><div class="crawl-bar" style="animation-delay: 1.2s"></div></div>
+            <span class="crawl-check">✓</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Arrow -->
+      <div class="steps__arrow steps__arrow--2" aria-hidden="true">
+        <svg width="60" height="24" viewBox="0 0 60 24" fill="none">
+          <path d="M2 12h52M44 4l12 8-12 8" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        </svg>
+      </div>
+
+      <!-- Step 03 -->
+      <article class="step-card will-animate glass-card" data-delay="200" aria-labelledby="step3-title">
+        <div class="step-card__number" aria-hidden="true">03</div>
+        <h3 class="step-card__title" id="step3-title">Visitors navigate by asking</h3>
+        <p class="step-card__desc">The widget appears on your site. Visitors ask in plain English. The agent navigates and clicks — no instructions needed.</p>
+        <div class="mini-chat" aria-label="Chat example">
+          <div class="mini-msg mini-msg--user">"How do I upgrade my plan?"</div>
+          <div class="mini-msg mini-msg--agent">
+            <span class="mini-icon" aria-hidden="true">⚡</span> Navigating to Billing &amp; Plan…
+          </div>
+          <div class="mini-msg mini-msg--agent mini-msg--success">
+            <span class="mini-icon" aria-hidden="true">✓</span> Done — click Upgrade to continue.
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FEATURES ===================== -->
+<section class="features" id="features" aria-labelledby="features-title">
+  <div class="features__inner">
+    <div class="section-label will-animate">Why Waypoint</div>
+    <h2 class="section-title will-animate" id="features-title">
+      Built different.<br />Because text responses aren't enough.
+    </h2>
+
+    <div class="features__grid">
+
+      <!-- Left: big panel -->
+      <div class="features__main will-animate">
+        <div class="gradient-border-card">
+          <div class="gradient-border-card__inner">
+            <h3 class="features__main-title">Real UI actions, not text responses.</h3>
+            <p class="features__main-desc">Other chatbots tell your users what to do. Waypoint <em>does it</em> for them.</p>
+
+            <table class="compare-table" role="table" aria-label="Competitive comparison">
+              <thead>
+                <tr>
+                  <th scope="col">Product</th>
+                  <th scope="col">Embeddable</th>
+                  <th scope="col">UI Actions</th>
+                  <th scope="col">Pre-indexed</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Intercom / Drift</td>
+                  <td class="compare-yes">✓</td>
+                  <td class="compare-no">✗</td>
+                  <td class="compare-no">✗</td>
+                </tr>
+                <tr>
+                  <td>OpenAI Operator</td>
+                  <td class="compare-no">✗</td>
+                  <td class="compare-yes">✓</td>
+                  <td class="compare-no">✗</td>
+                </tr>
+                <tr>
+                  <td>Voiceflow</td>
+                  <td class="compare-yes">✓</td>
+                  <td class="compare-no">✗</td>
+                  <td class="compare-no">✗</td>
+                </tr>
+                <tr class="compare-table__waypoint">
+                  <td><strong>Waypoint</strong></td>
+                  <td class="compare-yes">✓</td>
+                  <td class="compare-yes">✓</td>
+                  <td class="compare-yes">✓</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: 4 tiles -->
+      <div class="features__tiles">
+        <div class="feature-tile glass-card will-animate" data-delay="0">
+          <span class="feature-tile__icon" aria-hidden="true">⚡</span>
+          <div>
+            <h4 class="feature-tile__title">Pre-indexed = Fast &amp; Accurate</h4>
+            <p class="feature-tile__desc">Actions resolve from your site's graph — no real-time vision or slow screenshot analysis.</p>
+          </div>
+        </div>
+        <div class="feature-tile glass-card will-animate" data-delay="100">
+          <span class="feature-tile__icon" aria-hidden="true">⚙️</span>
+          <div>
+            <h4 class="feature-tile__title">Works with React, Next.js, Vue</h4>
+            <p class="feature-tile__desc">SPA-aware navigation handles pushState, history API, and all major routers out of the box.</p>
+          </div>
+        </div>
+        <div class="feature-tile glass-card will-animate" data-delay="200">
+          <span class="feature-tile__icon" aria-hidden="true">🔒</span>
+          <div>
+            <h4 class="feature-tile__title">Scoped to your domain</h4>
+            <p class="feature-tile__desc">The agent cannot navigate outside your site. Enforced server-side and client-side.</p>
+          </div>
+        </div>
+        <div class="feature-tile glass-card will-animate" data-delay="300">
+          <span class="feature-tile__icon" aria-hidden="true">🔄</span>
+          <div>
+            <h4 class="feature-tile__title">Auto re-index on deploy</h4>
+            <p class="feature-tile__desc">Add one webhook to your Vercel/Netlify pipeline. Index stays current automatically.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== INTERACTIVE DEMO ===================== -->
+<section class="demo-section" id="demo" aria-labelledby="demo-title">
+  <div class="demo-section__inner">
+    <div class="section-label will-animate">Try It</div>
+    <h2 class="section-title will-animate" id="demo-title">
+      See the agent in action.
+    </h2>
+    <p class="section-sub will-animate">Type a question below. The agent navigates the mock site using a pre-built index.</p>
+
+    <div class="demo-browser will-animate" aria-label="Interactive demo">
+      <div class="browser-chrome">
+        <div class="browser-chrome__bar">
+          <span class="browser-dot browser-dot--red"></span>
+          <span class="browser-dot browser-dot--yellow"></span>
+          <span class="browser-dot browser-dot--green"></span>
+          <span class="browser-url" id="demo-url-bar">acme.app/dashboard</span>
+        </div>
+        <div class="browser-viewport browser-viewport--demo">
+          <!-- Fake Acme layout for demo -->
+          <div class="acme-layout">
+            <aside class="acme-sidebar">
+              <div class="acme-sidebar__logo">Acme</div>
+              <nav class="acme-nav" aria-label="Demo Acme navigation">
+                <a href="#" class="acme-nav__item acme-nav__item--active" id="demo-nav-dashboard">Dashboard</a>
+                <a href="#" class="acme-nav__item" id="demo-nav-billing">Billing</a>
+                <a href="#" class="acme-nav__item" id="demo-nav-profile">Profile</a>
+                <a href="#" class="acme-nav__item" id="demo-nav-settings">Settings</a>
+                <a href="#" class="acme-nav__item" id="demo-nav-team">Team</a>
+                <a href="#" class="acme-nav__item" id="demo-nav-api">API Keys</a>
+              </nav>
+            </aside>
+            <main class="acme-content" id="demo-content-area">
+              <h2 class="acme-content__title" id="demo-content-title">Dashboard</h2>
+              <p class="acme-content__hint" id="demo-content-hint">Try asking Waypoint to navigate somewhere…</p>
+            </main>
+          </div>
+
+          <!-- Waypoint widget (interactive) -->
+          <div class="wp-widget wp-widget--demo" id="demo-widget">
+            <button class="wp-bubble" id="demo-bubble" aria-label="Open Waypoint assistant" aria-expanded="false">
+              <span class="wp-bubble__ring" aria-hidden="true"></span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2C7.03 2 3 6.03 3 11c0 2.39.86 4.57 2.28 6.27L4 22l4.86-1.28C10.44 21.55 11.2 21.7 12 21.7c4.97 0 9-4.03 9-9s-4.03-10.7-9-10.7z" fill="#00e5ff" opacity="0.9"/>
+                <path d="M8 10h8M8 14h5" stroke="#040812" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+
+            <div class="wp-panel" id="demo-panel" aria-label="Interactive Waypoint demo" aria-hidden="true">
+              <div class="wp-panel__header">
+                <span class="wp-panel__title">Waypoint</span>
+                <span class="wp-panel__badge">Demo</span>
+              </div>
+              <div class="wp-panel__messages" id="demo-messages" aria-live="polite" aria-atomic="false">
+                <div class="wp-msg wp-msg--agent">
+                  <span class="wp-msg__text">Ask me to navigate anywhere on this site!</span>
+                </div>
+              </div>
+              <form class="wp-panel__form" id="demo-form" onsubmit="return false;">
+                <input
+                  type="text"
+                  class="wp-input"
+                  id="demo-input"
+                  placeholder="e.g. show me my invoices"
+                  autocomplete="off"
+                  aria-label="Ask Waypoint"
+                  maxlength="120"
+                />
+                <button type="submit" class="wp-send" aria-label="Send message">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+              <p class="wp-panel__note">// Runs in browser. Real agent uses Claude claude-sonnet-4-6 + your site's pre-built index.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="demo-hints" role="list" aria-label="Try these prompts">
+        <span class="demo-hint-label">Try:</span>
+        <button class="demo-hint" role="listitem" data-hint="show me my invoices">show me my invoices</button>
+        <button class="demo-hint" role="listitem" data-hint="I want to change my email">change my email</button>
+        <button class="demo-hint" role="listitem" data-hint="upgrade my plan">upgrade my plan</button>
+        <button class="demo-hint" role="listitem" data-hint="manage my team">manage my team</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== INTEGRATION ===================== -->
+<section class="integration" id="integration" aria-labelledby="integration-title">
+  <div class="integration__inner">
+    <div class="section-label will-animate">Integration</div>
+    <h2 class="section-title will-animate" id="integration-title">
+      Up and running in<br />under 2 minutes.
+    </h2>
+
+    <div class="integration__grid">
+
+      <!-- Left: steps -->
+      <div class="integration__steps">
+        <div class="int-step will-animate" data-delay="0">
+          <div class="int-step__num" aria-hidden="true">1</div>
+          <div>
+            <h3 class="int-step__title">Sign up &amp; get your API key</h3>
+            <p class="int-step__desc">Create an account, register your site URL. Takes about 30 seconds.</p>
+            <span class="int-step__time">~30s</span>
+          </div>
+        </div>
+        <div class="int-step will-animate" data-delay="100">
+          <div class="int-step__num" aria-hidden="true">2</div>
+          <div>
+            <h3 class="int-step__title">Add the script tag</h3>
+            <p class="int-step__desc">Paste one line into your <code>&lt;head&gt;</code>. Or use the Next.js component.</p>
+            <span class="int-step__time">~30s</span>
+          </div>
+        </div>
+        <div class="int-step will-animate" data-delay="200">
+          <div class="int-step__num" aria-hidden="true">3</div>
+          <div>
+            <h3 class="int-step__title">Add the deploy webhook</h3>
+            <p class="int-step__desc">One line in your CI/CD pipeline keeps the index current on every deploy.</p>
+            <span class="int-step__time">~60s</span>
+          </div>
+        </div>
+        <a href="#waitlist" class="btn btn--primary btn--lg int-step__cta will-animate" data-delay="300">Get your API key →</a>
+      </div>
+
+      <!-- Right: tabbed code -->
+      <div class="integration__code will-animate" data-delay="100">
+        <div class="code-tabs" role="tablist" aria-label="Integration code examples">
+          <button class="code-tab code-tab--active" role="tab" aria-selected="true" aria-controls="tab-html" id="tab-btn-html" data-tab="html">HTML</button>
+          <button class="code-tab" role="tab" aria-selected="false" aria-controls="tab-nextjs" id="tab-btn-nextjs" data-tab="nextjs">Next.js</button>
+          <button class="code-tab" role="tab" aria-selected="false" aria-controls="tab-webhook" id="tab-btn-webhook" data-tab="webhook">Webhook</button>
+        </div>
+
+        <div class="code-block" id="tab-html" role="tabpanel" aria-labelledby="tab-btn-html">
+          <button class="code-block__copy" data-tab-copy="html" aria-label="Copy HTML snippet">Copy</button>
+          <pre><code id="code-html"><span class="t-comment">&lt;!-- Add to your &lt;head&gt; --&gt;</span>
+<span class="t-tag">&lt;script</span>
+  <span class="t-attr">src</span>=<span class="t-string">"https://cdn.waypoint.ai/v1.js"</span>
+  <span class="t-attr">data-key</span>=<span class="t-string">"wpt_your_api_key"</span>
+  <span class="t-attr">defer</span>
+<span class="t-tag">&gt;&lt;/script&gt;</span></code></pre>
+        </div>
+
+        <div class="code-block code-block--hidden" id="tab-nextjs" role="tabpanel" aria-labelledby="tab-btn-nextjs">
+          <button class="code-block__copy" data-tab-copy="nextjs" aria-label="Copy Next.js snippet">Copy</button>
+          <pre><code id="code-nextjs"><span class="t-comment">// app/layout.tsx</span>
+<span class="t-keyword">import</span> Script <span class="t-keyword">from</span> <span class="t-string">'next/script'</span>
+
+<span class="t-keyword">export default function</span> <span class="t-fn">RootLayout</span>(<span class="t-param">{ children }</span>) {
+  <span class="t-keyword">return</span> (
+    <span class="t-tag">&lt;html&gt;</span>
+      <span class="t-tag">&lt;body&gt;</span>
+        {children}
+        <span class="t-tag">&lt;Script</span>
+          <span class="t-attr">src</span>=<span class="t-string">"https://cdn.waypoint.ai/v1.js"</span>
+          <span class="t-attr">data-key</span>=<span class="t-string">"wpt_your_api_key"</span>
+          <span class="t-attr">strategy</span>=<span class="t-string">"afterInteractive"</span>
+        <span class="t-tag">/&gt;</span>
+      <span class="t-tag">&lt;/body&gt;</span>
+    <span class="t-tag">&lt;/html&gt;</span>
+  )
+}</code></pre>
+        </div>
+
+        <div class="code-block code-block--hidden" id="tab-webhook" role="tabpanel" aria-labelledby="tab-btn-webhook">
+          <button class="code-block__copy" data-tab-copy="webhook" aria-label="Copy webhook snippet">Copy</button>
+          <pre><code id="code-webhook"><span class="t-comment"># Add to your deploy pipeline (Vercel / Netlify / GitHub Actions)</span>
+
+<span class="t-comment"># Option A: curl</span>
+<span class="t-fn">curl</span> -X POST https://api.waypoint.ai/reindex \
+  -H <span class="t-string">"x-api-key: wpt_your_api_key"</span>
+
+<span class="t-comment"># Option B: GitHub Actions step</span>
+- <span class="t-attr">name</span>: <span class="t-string">Trigger Waypoint reindex</span>
+  <span class="t-attr">run</span>: <span class="t-string">|
+    curl -X POST https://api.waypoint.ai/reindex \
+      -H "x-api-key: ${{ secrets.WAYPOINT_KEY }}"</span></code></pre>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WAITLIST CTA ===================== -->
+<section class="waitlist" id="waitlist" aria-labelledby="waitlist-title">
+  <div class="waitlist__glow" aria-hidden="true"></div>
+  <div class="waitlist__inner">
+    <div class="section-label section-label--center will-animate">Early Access</div>
+    <h2 class="section-title section-title--center will-animate" id="waitlist-title">
+      Be first. Shape the future<br />of web navigation.
+    </h2>
+    <p class="section-sub section-sub--center will-animate">
+      We're onboarding a small group of developers to refine the product.<br />
+      Get access before the public launch.
+    </p>
+
+    <form class="waitlist__form will-animate" id="waitlist-form" novalidate aria-label="Early access signup">
+      <div class="waitlist__input-wrap" id="waitlist-input-wrap">
+        <input
+          type="email"
+          class="waitlist__input"
+          id="waitlist-email"
+          placeholder="you@company.com"
+          autocomplete="email"
+          aria-label="Email address"
+          required
+        />
+        <button type="submit" class="btn btn--primary waitlist__submit">
+          Join the waitlist
+        </button>
+      </div>
+      <p class="waitlist__error" id="waitlist-error" role="alert" aria-live="assertive"></p>
+    </form>
+
+    <div class="waitlist__success" id="waitlist-success" aria-live="polite" hidden>
+      <span class="waitlist__success-text">✓ You're on the list. We'll be in touch.</span>
+    </div>
+
+    <p class="waitlist__fine-print will-animate">No spam. Unsubscribe anytime. We'll email you when you have access.</p>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer" role="contentinfo">
+  <div class="footer__inner">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <a href="#" class="footer__logo" aria-label="Waypoint home">
+          <img src="assets/logo.svg" alt="Waypoint" width="130" height="26" />
+        </a>
+        <p class="footer__tagline">The embeddable AI agent that<br />navigates your website for users.</p>
+        <div class="footer__badges" aria-label="Built with">
+          <span class="tech-badge">Claude claude-sonnet-4-6</span>
+          <span class="tech-badge">Playwright</span>
+          <span class="tech-badge">TypeScript</span>
+        </div>
+      </div>
+
+      <nav class="footer__nav" aria-label="Footer navigation">
+        <div class="footer__col">
+          <h4 class="footer__col-title">Product</h4>
+          <ul role="list">
+            <li><a href="#how-it-works" class="footer__link">How it works</a></li>
+            <li><a href="#features" class="footer__link">Features</a></li>
+            <li><a href="#demo" class="footer__link">Demo</a></li>
+            <li><a href="#integration" class="footer__link">Integration</a></li>
+            <li><a href="#" class="footer__link">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4 class="footer__col-title">Company</h4>
+          <ul role="list">
+            <li><a href="#" class="footer__link">About</a></li>
+            <li><a href="#" class="footer__link">Blog</a></li>
+            <li><a href="https://github.com" class="footer__link" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="#" class="footer__link">Privacy</a></li>
+            <li><a href="#" class="footer__link">Terms</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <div class="footer__bottom">
+      <span class="footer__copy">© 2026 Waypoint. All rights reserved.</span>
+      <span class="footer__mono">// Navigate smarter. Ship faster.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="main.js" defer></script>
+</body>
+</html>
