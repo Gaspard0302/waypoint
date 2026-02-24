@@ -9,7 +9,7 @@ export default async function SitesPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div>
+    <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">Sites</h1>
         <Link
@@ -23,6 +23,7 @@ export default async function SitesPage() {
       {!sites || sites.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-12 text-center">
           <p className="text-sm text-zinc-500">No sites yet.</p>
+          <p className="mt-1 text-xs text-zinc-400">Create a site to get your setup command.</p>
           <Link
             href="/dashboard/sites/new"
             className="mt-4 inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"

@@ -1,20 +1,17 @@
 import Link from "next/link";
 
-const SCRIPT_TAG = `<script
-  src="https://cdn.waypoint.ai/waypoint.min.js"
-  data-key="YOUR_API_KEY"
-></script>`;
+const NPX_CMD = `npx waypoint-init`;
 
 const steps = [
   {
     num: "01",
-    title: "Add one script tag",
-    body: "Copy a single line into your site. No build step, no framework dependency — works on React, Next.js, plain HTML, or Webflow.",
+    title: "Run one command",
+    body: "Sign up, create a site, then run `npx waypoint-init` in your project. It installs three skills into your coding agent in seconds.",
   },
   {
     num: "02",
-    title: "We index your site",
-    body: "Waypoint crawls every page and maps every button, link, and form into a compact action map. No screenshots — structured data only.",
+    title: "Map your codebase",
+    body: "Run `/waypoint-setup` in Claude Code, Mistral Vibe, or Cursor. The agent reads your source and builds an action map — every route, every button, every form.",
   },
   {
     num: "03",
@@ -36,8 +33,8 @@ const features = [
   },
   {
     icon: "⚡",
-    title: "Pre-indexed, not vision",
-    body: "We crawl your site upfront and build an action map. Instant responses, zero computer-vision latency, fewer hallucinations.",
+    title: "Source-indexed, not vision",
+    body: "Your coding agent reads your source directly. Every route found, including auth-gated and dynamic pages no crawler can reach.",
   },
   {
     icon: "⊞",
@@ -143,14 +140,14 @@ export default function LandingPage() {
 
           {/* Code snippet */}
           <div className="fu fu-4">
-            <p className="wp-body text-xs text-zinc-600 uppercase tracking-widest mb-3">Add to your site</p>
+            <p className="wp-body text-xs text-zinc-600 uppercase tracking-widest mb-3">Get started in seconds</p>
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 max-w-md">
               <div className="flex gap-1.5 mb-4">
                 <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                 <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                 <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
               </div>
-              <pre className="text-sm text-zinc-300 font-mono whitespace-pre overflow-x-auto">{SCRIPT_TAG}</pre>
+              <pre className="text-sm text-zinc-300 font-mono whitespace-pre overflow-x-auto">{NPX_CMD}</pre>
             </div>
           </div>
         </div>
@@ -205,7 +202,7 @@ export default function LandingPage() {
                   <th className="text-left py-4 pr-8 text-sm font-semibold text-zinc-900 w-1/2">Product</th>
                   <th className="text-center py-4 px-4 text-sm font-semibold text-zinc-900">Embeddable</th>
                   <th className="text-center py-4 px-4 text-sm font-semibold text-zinc-900">Takes UI actions</th>
-                  <th className="text-center py-4 px-4 text-sm font-semibold text-zinc-900">Pre-indexed</th>
+                  <th className="text-center py-4 px-4 text-sm font-semibold text-zinc-900">Source-indexed</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,7 +235,7 @@ export default function LandingPage() {
             <em className="text-amber-400">every visitor?</em>
           </h2>
           <p className="wp-body text-zinc-400 text-lg max-w-sm mx-auto mb-10">
-            One script tag. Zero friction for your users.
+            Five minutes to set up. Zero friction for your visitors.
           </p>
           <Link
             href="/signup"

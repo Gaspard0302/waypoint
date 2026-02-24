@@ -1,7 +1,7 @@
 # Waypoint — Product Requirements Document
 
-**Version:** 1.1
-**Date:** 2026-02-20
+**Version:** 1.2
+**Date:** 2026-02-24
 **Author:** Gaspard Hassenforder
 **Status:** Active
 
@@ -58,8 +58,8 @@ Waypoint is the first **embeddable widget that takes UI actions**:
 
 **Why this wins:**
 - Scoped to host domain only (no security concerns).
-- Uses a pre-built index — no computer vision, low latency, fewer hallucinations.
-- Works on SPAs (React, Vue, Next.js) — not just static sites.
+- Uses a pre-built index from source code — no computer vision, low latency, fewer hallucinations.
+- Works on any framework (React, Vue, Next.js, SvelteKit, Rails) — because it reads source, not rendered HTML.
 
 ---
 
@@ -92,11 +92,18 @@ The actual chat widget users — visitors on the host site. They need zero setup
 ### Developer (Site Owner)
 
 ```
-1. Sign up on waypoint.ai dashboard
-2. Enter their website URL
-3. Click "Index my site" → Waypoint crawls all pages
-4. Copy a <script> tag into their HTML
-5. (Optional) Add a deploy webhook to auto-reindex on deploy
+1. Sign up on waypoint.ai → create a site → get an API key
+2. Run one command shown on the dashboard:
+     npx waypoint-init
+   → CLI asks which coding agent they use (Claude Code / Mistral Vibe / Cursor)
+   → Authenticates, writes credentials to .waypoint config (gitignored)
+   → Downloads 3 skill files into their agent's skill directory
+3. In their coding agent terminal, run:
+     /waypoint-setup   ← orchestrator guides the rest
+   → Prompts them to run /waypoint-index (maps the codebase)
+   → Then prompts them to run /waypoint-install (embeds the widget)
+4. Review the widget diff, commit and deploy
+5. (Optional) Add /waypoint-index to CI/CD for auto-reindex on every deploy
 ```
 
 ### Visitor (End User)
@@ -117,31 +124,54 @@ The onboarding experience is the product's first impression and the primary conv
 
 ### Step-by-Step Onboarding
 
+The dashboard is minimal — it's the **launch pad**, not the wizard. The real onboarding happens in the developer's own coding agent terminal via the 3-skill guided flow.
+
 ```
-Step 1: Sign Up
+Step 1: Sign Up (dashboard)
   ↓ Email + password (Supabase Auth)
-  ↓ Email verification (optional for MVP — can skip)
 
-Step 2: Create Your First Site
-  ↓ Form: Site name + Website URL
-  ↓ CTA: "Start indexing my site"
+Step 2: Create Your First Site (dashboard)
+  ↓ Form: Site name + production URL
+  ↓ API key generated automatically
+  ↓ Dashboard shows one command to copy:
+      npx waypoint-init
 
-Step 3: Indexing (background job, real-time progress)
-  ↓ "Waypoint is mapping your site..."
-  ↓ Live progress counter: "12 pages discovered..."
-  ↓ Pages appear in the tree as they're crawled (streaming, not waiting)
+Step 3: CLI Setup (terminal)
+  ↓ npx waypoint-init
+  ↓ "Which coding agent do you use?" → Claude Code / Mistral Vibe / Cursor
+  ↓ Authenticates (browser OAuth or paste API key)
+  ↓ Writes credentials to .waypoint (auto-added to .gitignore)
+  ↓ Downloads 3 skill files into agent's skill directory
+  ↓ "Setup complete. Open your coding agent and run /waypoint-setup"
 
-Step 4: Site Map Reveal
-  ↓ Full interactive tree/map of their site with screenshots
-  ↓ Each node = one page, with thumbnail + page title + route path
-  ↓ Edges show how pages link to each other
+Step 4: Guided Skill Wizard (coding agent terminal)
+
+  /waypoint-setup
+  ↓ ✓ Found API key
+  ↓ ✓ Detected Next.js App Router — 47 route files found
+  ↓ Ready to map your codebase. Type /waypoint-index to continue.
+
+  /waypoint-index
+  ↓ Reads all route files and components
+  ↓ Extracts routes, purposes, interactive elements
+  ↓ POSTs structured index to Waypoint
+  ↓ ✓ 47 routes indexed, 312 elements extracted
+  ↓ Your site map is live at waypoint.ai/dashboard
+  ↓ Ready to embed the widget. Type /waypoint-install to continue.
+
+  /waypoint-install
+  ↓ ✓ Detected layout.tsx at app/layout.tsx
+  ↓ Adding WaypointWidget to root layout...
+  ↓ ✓ Done — review the diff, commit and deploy when ready
+
+Step 5: Site Map Reveal (dashboard, after /waypoint-index runs)
+  ↓ Full interactive tree/map of their site appears live
+  ↓ Each node = one route, with title + purpose + element count
   ↓ "This is the map your AI agent will use to navigate your site."
 
-Step 5: Install
-  ↓ Code snippet: <script> tag with their API key pre-filled
-  ↓ Copy button
-  ↓ Optional: webhook URL for auto-reindex on deploy
-  ↓ CTA: "I've added the script" → opens a test widget preview
+Step 6: CI/CD (optional, post-launch)
+  ↓ Dashboard shows a one-liner for GitHub Actions / Vercel hooks
+  ↓ Runs /waypoint-index automatically on every deploy
 ```
 
 ### UX Principles for Onboarding
@@ -154,7 +184,7 @@ Step 5: Install
 ### Stepper Component Design
 
 ```
-[1: Account] → [2: Add site] → [3: Indexing...] → [4: Your site map] → [5: Install]
+[1: Account] → [2: Add site + npx] → [3: /waypoint-setup] → [4: /waypoint-index] → [5: /waypoint-install]
 ```
 
 Use Shadcn's `Stepper` component (or build a simple one). Each step is a full-page panel, not a modal. The wizard lives at `/onboarding`.
@@ -177,26 +207,26 @@ A **tree graph** where:
 - Nodes are organized by depth from the homepage (root)
 - Each node displays:
   - Page route (e.g. `/pricing/upgrade`)
-  - Page title (from `<title>` tag)
-  - A thumbnail screenshot taken during crawl
+  - Page title (from component/route metadata)
+  - Page purpose — a one-line description inferred by the skill from the source
   - Count of interactive elements found (e.g. "4 actions")
 - Clicking a node expands a sidebar showing all interactive elements on that page
 
 ### Visual Structure Example
 
 ```
-[ / (Home) 🖼️ ]
+[ / (Home) ]
       |
    ┌──┴──────────────┐
    ▼                 ▼
-[ /pricing 🖼️ ]  [ /docs 🖼️ ]
+[ /pricing ]      [ /docs ]
       |                |
    ┌──┴──┐         ┌───┴────┐
    ▼     ▼         ▼        ▼
 [/upgrade] [/compare] [/quickstart] [/api-ref]
 ```
 
-Each `🖼️` represents a thumbnail screenshot. Nodes with many child links show a collapsed "+N more" indicator to avoid visual clutter.
+Nodes with many children show a collapsed "+N more" indicator to avoid visual clutter.
 
 ### Technology: React Flow
 
@@ -214,27 +244,19 @@ Each `🖼️` represents a thumbnail screenshot. Nodes with many child links sh
 ```tsx
 // Conceptual structure of each node in the tree
 <SiteMapNode>
-  <img src={screenshotThumbnailUrl} alt={pageTitle} />
   <div className="route">{route.path}</div>      // e.g. "/pricing"
   <div className="title">{route.title}</div>      // e.g. "Pricing – Waypoint"
+  <div className="purpose">{route.purpose}</div>  // e.g. "Manage subscription and billing"
   <div className="badge">{elements.length} actions</div>
 </SiteMapNode>
 ```
 
-### Screenshot Storage
-
-- Playwright captures `page.screenshot({ type: 'jpeg', quality: 60 })` during crawl.
-- Screenshots stored in **Supabase Storage** (free tier: 1GB).
-- URL stored in `site_index.screenshot_url` column.
-- Thumbnails displayed at ~200×120px in the tree. Full resolution on click.
-- Free tier: screenshots stored at lower quality (60% JPEG). Pro tier: full quality.
-
 ### Real-time Updates During Indexing
 
-As the crawler discovers new pages, the frontend should show them appearing live:
-- Backend publishes updates via **Supabase Realtime** (built-in to Supabase — subscribe to DB changes).
-- Dashboard subscribes to changes on `site_index` table for the current `crawl_job_id`.
-- New nodes "pop in" to the tree as they're discovered.
+As the skill POSTs routes to the backend, the frontend shows them appearing live:
+- Backend inserts rows into `site_index` as it receives them from the skill.
+- Dashboard subscribes to changes on `site_index` table via **Supabase Realtime**.
+- New nodes "pop in" to the tree as they arrive.
 - No polling needed — Supabase Realtime handles the WebSocket connection.
 
 ---
@@ -260,7 +282,6 @@ This stack was chosen for: **commercial viability, low operational cost, solo de
 - `pydantic` — data validation / settings
 - `supabase-py` — database client
 - `anthropic` — Claude API
-- `playwright` — headless browser for crawling
 - `python-dotenv` — environment variable management
 
 ---
@@ -335,13 +356,23 @@ This stack was chosen for: **commercial viability, low operational cost, solo de
 
 ---
 
-### Crawler — Playwright (Python)
+### Indexing — Skill File (Markdown)
 
-**Why Playwright?**
-- Handles SPAs (React, Vue, Next.js) — renders JavaScript before parsing.
-- Python bindings (`playwright-python`) — same language as your backend.
-- Accesses the **accessibility tree** (ARIA labels, roles, element structure) which is smaller and more stable than raw HTML.
-- **Alternative considered:** Stagehand (by Browserbase). More powerful but adds cost and complexity. Defer to Phase 2+.
+**Why a skill instead of a headless crawler?**
+- Source code is the ground truth: sees all routes (auth-gated, dynamic, orphan pages) — a crawler can only find what's linked.
+- Richer semantic context: component names, prop labels, and JSDoc comments convey intent far better than scraped text.
+- Zero server infrastructure: runs on the developer's machine via their existing agentic coding tool.
+- Framework-aware: an AI agent reading Next.js App Router files understands the structure; a crawler just sees rendered HTML.
+- No Playwright, no headless Chromium, no Browserbase costs.
+
+**How it works:**
+- The skill is a single `.md` file developers add to their project (`.claude/skills/waypoint-index.md` for Claude Code, compatible with Mistral Vibe and Cursor).
+- When run, the agent: discovers route files → reads component trees → extracts labels, selectors, purposes → builds a JSON index → POSTs to `POST /api/v1/sites/{id}/index`.
+- The skill explicitly instructs the agent to skip `.env` files, auth internals, API secrets, and private business logic.
+
+**Re-indexing strategy:**
+- Developer adds the skill run to their CI/CD pipeline (one line in GitHub Actions).
+- No webhook needed — the index is always fresh from source.
 
 ---
 
@@ -352,10 +383,11 @@ This stack was chosen for: **commercial viability, low operational cost, solo de
 | Backend (FastAPI) | Railway | Free ($5/month credit) |
 | Dashboard (Next.js) | Vercel | Free tier |
 | Database | Supabase | Free tier |
-| Crawler jobs | Railway (same service) | Included |
 | Widget JS file | Vercel (static hosting) | Free |
+| CLI (`npx waypoint-init`) | npm registry | Free |
+| Indexing + installation | Developer's machine (skills) | Free |
 
-**Total infra cost at MVP: ~$0/month.** Scales linearly as you grow.
+**Total infra cost at MVP: ~$0/month.** No crawler infrastructure needed.
 
 ---
 
@@ -365,25 +397,30 @@ This stack was chosen for: **commercial viability, low operational cost, solo de
 ┌─────────────────────────────────────────────────────────────┐
 │                    DEVELOPER FLOW                           │
 │                                                             │
-│  Dashboard (Next.js on Vercel)                              │
-│    → Sign up → Enter URL → Trigger crawl → Copy script tag  │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ HTTPS API calls
-                           ▼
+│  Developer Terminal (their own machine)                     │
+│    runs /waypoint-index skill                               │
+│    → AI agent reads codebase source files                   │
+│    → builds route+action JSON map                           │
+│    → POSTs index to backend ─────────────────────────────┐  │
+│                                                           │  │
+│  Dashboard (Next.js on Vercel)                            │  │
+│    → Sign up → Create site → Get API key → Copy script tag│  │
+└───────────────────────────────────────────────────────────┼──┘
+                                                            │ HTTPS
+                                                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              BACKEND (FastAPI on Railway)                   │
 │                                                             │
-│  /api/sites       — CRUD for site configs                   │
-│  /api/crawl       — Trigger crawl job                       │
-│  /api/reindex     — Webhook for deploy pipelines            │
-│  /api/chat        — Widget sends messages here              │
+│  /api/v1/sites/{id}/index  — Receive index from skill       │
+│  /api/v1/sites             — CRUD for site configs          │
+│  /api/v1/chat              — Widget sends messages here     │
 │                                                             │
-│  ┌─────────────┐    ┌──────────────┐    ┌────────────────┐  │
-│  │   Crawler   │    │    Agent     │    │   Supabase DB  │  │
-│  │ (Playwright)│───▶│ (Claude API) │◀──▶│  (Postgres)    │  │
-│  └─────────────┘    └──────────────┘    └────────────────┘  │
+│  ┌──────────────┐    ┌────────────────┐                     │
+│  │    Agent     │◀──▶│   Supabase DB  │                     │
+│  │ (Claude API) │    │  (Postgres)    │                     │
+│  └──────────────┘    └────────────────┘                     │
 └──────────────────────────┬──────────────────────────────────┘
-                           │ WebSocket / HTTP SSE
+                           │ HTTP
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              VISITOR FLOW (End User)                        │
@@ -393,7 +430,7 @@ This stack was chosen for: **commercial viability, low operational cost, solo de
 │                                                             │
 │  Widget (Vanilla TS) ─── sends user message ──▶ Backend     │
 │                      ◀── receives action ───────            │
-│                      ─── executes in browser ──▶ DOM       │
+│                      ─── executes in browser ──▶ DOM        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -414,18 +451,28 @@ This stack was chosen for: **commercial viability, low operational cost, solo de
 
 ```
 waypoint/
+├── cli/                        # npx waypoint-init (Node.js)
+│   ├── index.js                # Entry point — auth, config write, skill download
+│   ├── package.json            # { "name": "waypoint", "bin": { "waypoint-init": "./index.js" } }
+│   └── templates/              # Skill file templates (one per platform)
+│       ├── waypoint-setup.md   # Orchestrator skill
+│       ├── waypoint-index.md   # Indexer skill
+│       └── waypoint-install.md # Integrator skill
+│
+├── skill/                      # Canonical skill source (platform-agnostic)
+│   ├── waypoint-setup.md       # Orchestrator: guided wizard, prompts user to run next skill
+│   ├── waypoint-index.md       # Indexer: reads source, builds + POSTs route+action map
+│   ├── waypoint-install.md     # Integrator: embeds widget in framework-appropriate location
+│   └── README.md               # How to install manually + CI/CD integration guide
+│
 ├── backend/                    # Python FastAPI
 │   ├── app/
 │   │   ├── main.py             # FastAPI app, router registration
 │   │   ├── config.py           # Pydantic settings (env vars)
 │   │   ├── api/
 │   │   │   ├── sites.py        # POST /sites, GET /sites/:id, etc.
-│   │   │   ├── crawl.py        # POST /crawl (trigger crawl job)
-│   │   │   ├── chat.py         # POST /chat (widget messages)
-│   │   │   └── webhook.py      # POST /reindex (deploy webhook)
-│   │   ├── crawler/
-│   │   │   ├── runner.py       # Playwright crawl orchestration
-│   │   │   └── parser.py       # Accessibility tree → structured index
+│   │   │   ├── index.py        # POST /sites/{id}/index (receive skill output)
+│   │   │   └── chat.py         # POST /chat (widget messages)
 │   │   ├── agent/
 │   │   │   ├── client.py       # Anthropic API calls
 │   │   │   └── prompts.py      # System prompts for agent
@@ -635,14 +682,13 @@ All backend endpoints are under `/api/v1/`. JSON request/response throughout.
 | `GET` | `/api/v1/sites/{id}` | JWT | Get site details |
 | `DELETE` | `/api/v1/sites/{id}` | JWT | Delete site + all data |
 
-#### Crawling
+#### Indexing
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/v1/sites/{id}/crawl` | JWT | Trigger a crawl job |
-| `GET` | `/api/v1/sites/{id}/crawl/status` | JWT | Get latest crawl status |
-| `GET` | `/api/v1/sites/{id}/index` | JWT | View the built index |
-| `POST` | `/api/v1/reindex` | API Key | Deploy webhook — triggers re-crawl |
+| `POST` | `/api/v1/sites/{id}/index` | API Key | Skill POSTs the route+action map here |
+| `GET` | `/api/v1/sites/{id}/index` | JWT | View the current index (dashboard) |
+| `GET` | `/api/v1/sites/{id}/index/jobs` | JWT | List index job history |
 
 #### Chat (Widget)
 
@@ -780,44 +826,63 @@ This is the critical section. Work in this order. Do not skip phases. Each phase
 
 ---
 
-### Phase 2 — Crawler + Site Map (Weeks 3–4)
+### Phase 2 — Skill + Site Map (Weeks 3–4)
 
-**Goal:** After clicking "Index my site", the backend crawls the URL and the dashboard shows a live-updating tree visualization with screenshots.
+**Goal:** Developer runs the Waypoint skill in their codebase, the backend receives the index, and the dashboard shows a live-updating tree visualization.
 
 **Tasks:**
 
-**Backend (crawler):**
-1. Install Playwright in backend → confirm it runs headlessly on Railway
-2. Write `crawler/runner.py`:
-   - Start from the homepage, discover all internal links (BFS — breadth-first search)
-   - Track parent → child relationships as links are followed
-   - For each page: capture `page.screenshot(type='jpeg', quality=60)`
-   - Store screenshot to Supabase Storage, get back a public URL
-   - Record depth (homepage = 0, linked from homepage = 1, etc.)
-   - Respect a max depth limit (configurable, default 4 levels)
-3. Write `crawler/parser.py`:
-   - Extracts accessibility tree from each page
-   - Identifies interactive elements (buttons, links, forms)
-   - Assigns each element: label, selector, action type, context description
-4. Backend: `POST /sites/{id}/crawl` → kicks off crawl as async background task
-5. Backend: `GET /sites/{id}/crawl/status` → returns job status + page count
-6. Backend: `GET /sites/{id}/index` → returns full tree (pages + elements)
-7. Each page row inserted into `site_index` table immediately as it's crawled (for real-time updates)
+**CLI (`cli/`):**
+1. Write `cli/index.js` — a Node.js script publishable via `npx waypoint-init`:
+   - Asks which coding agent (Claude Code / Mistral Vibe / Cursor)
+   - Authenticates: open browser to `waypoint.ai/cli-auth?token=xxx` or prompt for API key paste
+   - Writes `.waypoint` config file: `{ apiKey, siteId, agentType }`
+   - Appends `.waypoint` to `.gitignore`
+   - Copies the 3 skill files from `cli/templates/` into the right directory:
+     - Claude Code → `.claude/skills/`
+     - Mistral Vibe → project root as `SKILL.md` variants
+     - Cursor → `.cursor/skills/`
+   - Prints success message: "Open your coding agent and run /waypoint-setup"
+2. Publish to npm so `npx waypoint-init` works without install
+
+**Skill files (`skill/`):**
+3. Write `waypoint-setup.md` (orchestrator):
+   - Checks for `.waypoint` config, reads `apiKey` and `siteId`
+   - Detects framework from `package.json` / file structure
+   - Counts route files and reports
+   - Ends with explicit prompt: "Type /waypoint-index to continue"
+4. Write `waypoint-index.md` (indexer):
+   - Discovers all route files (Next.js `app/`, `pages/`, React Router, Vue Router, etc.)
+   - For each route: extract path, title, infer purpose from component name + headings
+   - Find interactive elements: buttons, links, forms — label, ARIA attrs, selector, action type
+   - Skip: `.env*`, auth middleware, private API handlers, DB schemas
+   - Build JSON array → POST to `/api/v1/sites/{siteId}/index` using key from `.waypoint`
+   - Ends with explicit prompt: "Type /waypoint-install to continue"
+5. Write `waypoint-install.md` (integrator):
+   - Detects framework and entry point (Next.js `app/layout.tsx`, Vue `App.vue`, plain HTML)
+   - Adds `<WaypointWidget apiKey="..." />` or `<script>` tag in the right place
+   - Instructs agent to show the diff before writing
+6. Test all 3 skills on this repo and at least one Next.js demo project
+
+**Backend (index endpoint):**
+4. Write `api/index.py`:
+   - `POST /api/v1/sites/{id}/index` — accepts JSON body: array of route objects
+   - Validates API key (same key used by widget)
+   - Creates a new `index_job` row (status = running)
+   - Upserts each route into `site_index` table (insert or update by path)
+   - Marks job as complete when all routes are stored
+5. `GET /api/v1/sites/{id}/index` — returns current index for dashboard
+6. `GET /api/v1/sites/{id}/index/jobs` — job history
 
 **Dashboard (site map):**
-8. Install React Flow + dagre: `npm install @xyflow/react @dagrejs/dagre`
-9. Subscribe to `site_index` table via Supabase Realtime — new rows trigger UI update
-10. Build `SiteMapNode` component: shows screenshot thumbnail + route path + title + element count badge
-11. Build `SiteMapFlow` component: uses dagre to layout nodes top-to-bottom, renders with React Flow
-12. Onboarding step 3: live counter + tree building in real-time as crawl runs
-13. Dashboard site detail page: full site map with zoom/pan
+7. Install React Flow + dagre: `npm install @xyflow/react @dagrejs/dagre`
+8. Subscribe to `site_index` table via Supabase Realtime — new rows trigger UI update
+9. Build `SiteMapNode` component: shows route path + title + purpose + element count badge
+10. Build `SiteMapFlow` component: uses dagre to layout nodes top-to-bottom, renders with React Flow
+11. Dashboard site detail page: full site map with zoom/pan
+12. Dashboard shows `npx waypoint-init` command prominently when no index exists yet
 
-**⚠️ Known challenges:**
-- Playwright on Railway requires system dependencies. Add a `nixpacks.toml` or `Dockerfile` that installs Chromium. Railway supports this natively.
-- Screenshots add crawl time. Run screenshot capture concurrently with accessibility tree parsing.
-- Supabase Storage: screenshots go in a bucket named `screenshots/{site_id}/{page_id}.jpg`. Make the bucket public (read-only) so dashboard can display them without auth.
-
-**Deliverable:** You enter your demo site URL, click "Index", and watch a tree of your website build itself in real-time — with screenshots in each node. By the end of crawling, you have a full interactive map of your site.
+**Deliverable:** Developer runs `npx waypoint-init`, follows the guided skill wizard (`/waypoint-setup` → `/waypoint-index` → `/waypoint-install`), watches their site map build in real-time on the dashboard, and ends with the widget embedded in their codebase — ready to commit.
 
 ---
 
@@ -941,6 +1006,11 @@ npm run dev   # runs on localhost:3000
 # Terminal 3: Widget (watch mode)
 cd widget
 npm run dev   # esbuild watch, rebuilds on save
+
+# Indexing (run once in a test project to populate the index):
+# → copy skill/waypoint-index.md into .claude/skills/ of any project
+# → run /waypoint-index in that project's terminal
+# → the skill will POST to http://localhost:8000
 ```
 
 Use a `.env` file in each project for local environment variables. Never commit `.env` files.
@@ -980,31 +1050,35 @@ NEXT_PUBLIC_BACKEND_URL=https://your-backend.railway.app
 
 | Question | Options | Recommendation |
 |---|---|---|
-| Crawler depth limit | Crawl all pages vs. cap at N | Start at 100 pages/site for free, configurable |
+| Skill distribution | Docs page copy-paste vs. npm package vs. dashboard download | Dashboard download (one click, pre-filled with API key) |
+| Non-developer customers | Require agentic tool vs. provide a CLI fallback | Agentic tool for MVP; add fallback CLI script later |
 | SPA navigation in widget | History API vs. custom router hooks | Try history API first, add per-framework workarounds later |
 | Widget delivery | Self-host on Vercel vs. CDN like Cloudflare | Vercel static is fine until 10K+ sites |
-| Crawler scheduling | Webhook only vs. also scheduled (daily) | Webhook-only for MVP, add scheduled in Phase 7 |
+| Re-index trigger | Manual only vs. CI integration | Manual for MVP; CI guide in docs |
+| Multi-platform skill | One file vs. platform-specific versions | One file (markdown instructions are universal) |
 
 ### Deferred Features (Post-MVP)
 
 1. **UI highlighting** — draw an animated border around target elements
 2. **Form pre-filling** — agent fills in form fields, not just navigates
-3. **Auth-gated crawling** — provide credentials to crawl logged-in pages
+3. **Auth-gated page indexing** — skill logs in and indexes pages behind auth
 4. **Multi-step flows** — agent executes a sequence of actions, not just one
 5. **Analytics** — heatmap of what visitors ask, which actions succeed/fail
 6. **White-label** — remove all Waypoint branding for agencies
 7. **Vector search over index** — for large sites with hundreds of pages
-8. **Stagehand integration** — real-time computer vision as fallback when index doesn't have the answer
+8. **Fallback CLI script** — for teams not using agentic coding tools (runs a Node/Python script that does the same analysis without an AI agent)
+9. **Skill for non-Next.js frameworks** — specialized skill variants for Rails, Django, Laravel
 
 ### Key Risks
 
 | Risk | Mitigation |
 |---|---|
-| Playwright fails on complex SPAs | Use explicit wait conditions, test on Next.js apps early |
-| Claude returns invalid selectors | Validate selectors before executing, fallback to navigate-only |
+| Developer doesn't use an agentic coding tool | Provide a fallback CLI script (Phase 7+); target developers who do use these tools first |
+| Skill generates incorrect selectors (source ≠ runtime DOM) | Validate selectors at widget runtime; fallback to navigate-only action |
 | Widget breaks host site CSS | Scope all CSS with a unique prefix, use Shadow DOM for isolation |
-| Customers churn before reindexing | Prompt for webhook setup at install, email reminder if site hasn't been reindexed in 30 days |
+| Customers churn before re-running skill | Email reminder if index hasn't been updated in 30 days; CI integration guide |
 | Big Tech browser agents commoditize product | Focus on "owner-controlled, branded experience" — that's the moat |
+| Skill leaks private info from source | Skill instructions explicitly exclude sensitive files; no raw source is sent to Waypoint — only the structured map |
 
 ---
 

@@ -1,0 +1,8 @@
+{
+  "name": "waypoint-init",
+  "version": "0.1.0",
+  "description": "Set up Waypoint skills in your coding agent",
+  "bin": { "waypoint-init": "./index.js" },
+  "type": "commonjs",
+  "files": ["index.js", "skills/"]
+}

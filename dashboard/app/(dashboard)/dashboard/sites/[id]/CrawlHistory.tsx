@@ -76,7 +76,7 @@ export default function CrawlHistory({ siteId, initialJobs }: Props) {
 
   if (jobs.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">No crawl jobs yet. Click "Re-index now" to start.</p>
+      <p className="text-sm text-zinc-500">No index runs yet. Run /waypoint-index in your coding agent to start.</p>
     );
   }
 
