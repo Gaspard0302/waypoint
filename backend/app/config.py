@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     SUPABASE_URL: str
     SUPABASE_SERVICE_ROLE_KEY: str
-    MISTRAL_API_KEY: str
+    ANTHROPIC_API_KEY: str
     ENVIRONMENT: str = "development"
     ALLOWED_ORIGINS: str = "http://localhost:3000"
 

@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS sites (
 );
 
 -- Crawl jobs: tracks indexing job status per site
+-- DEPRECATED (Phase 1 Playwright crawler, kept for historical data)
 CREATE TABLE IF NOT EXISTS crawl_jobs (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   site_id     UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
@@ -40,19 +41,32 @@ CREATE TABLE IF NOT EXISTS crawl_jobs (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Site index: one row per crawled page
+-- Site index: one row per indexed page (populated by /waypoint-index skill)
 CREATE TABLE IF NOT EXISTS site_index (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   site_id        UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
-  crawl_job_id   UUID REFERENCES crawl_jobs(id) ON DELETE SET NULL,
-  parent_id      UUID REFERENCES site_index(id) ON DELETE SET NULL,  -- tree structure
+  crawl_job_id   UUID REFERENCES crawl_jobs(id) ON DELETE SET NULL,  -- DEPRECATED (Phase 1 Playwright crawler, kept for historical data)
+  parent_id      UUID REFERENCES site_index(id) ON DELETE SET NULL,  -- DEPRECATED (Phase 1 Playwright crawler, kept for historical data)
   route          TEXT NOT NULL,
   title          TEXT,
-  depth          INTEGER NOT NULL DEFAULT 0,
-  elements       JSONB NOT NULL DEFAULT '[]',  -- interactive elements with selectors + actions
-  screenshot_url TEXT,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  purpose        TEXT,  -- human-readable description of what the page does
+  summary        TEXT,  -- 2-3 sentence description for retrieval and routing accuracy
+  depth          INTEGER NOT NULL DEFAULT 0,  -- DEPRECATED (Phase 1 Playwright crawler, kept for historical data)
+  elements       JSONB NOT NULL DEFAULT '[]',  -- interactive elements: [{label, selector, action, risk}]
+  screenshot_url TEXT,  -- DEPRECATED (Phase 1 Playwright crawler, kept for historical data)
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  fts            tsvector GENERATED ALWAYS AS (
+    to_tsvector('english',
+      coalesce(route, '') || ' ' ||
+      coalesce(title, '') || ' ' ||
+      coalesce(purpose, '') || ' ' ||
+      coalesce(summary, '')
+    )
+  ) STORED
 );
+
+-- Enable REPLICA IDENTITY FULL for Realtime DELETE events to include full row data
+ALTER TABLE site_index REPLICA IDENTITY FULL;
 
 -- Sessions: anonymous visitor widget sessions
 CREATE TABLE IF NOT EXISTS sessions (
@@ -81,6 +95,7 @@ CREATE INDEX IF NOT EXISTS idx_sites_user_id       ON sites(user_id);
 CREATE INDEX IF NOT EXISTS idx_sites_api_key       ON sites(api_key);
 CREATE INDEX IF NOT EXISTS idx_crawl_jobs_site_id  ON crawl_jobs(site_id);
 CREATE INDEX IF NOT EXISTS idx_site_index_site_id  ON site_index(site_id);
+CREATE INDEX IF NOT EXISTS site_index_fts_idx      ON site_index USING gin(fts);
 CREATE INDEX IF NOT EXISTS idx_sessions_site_id    ON sessions(site_id);
 CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id);
 

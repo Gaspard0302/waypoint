@@ -9,7 +9,7 @@ You are the Waypoint integrator. Your job is to embed the Waypoint widget script
 Read `.waypoint` from the project root:
 
 ```json
-{ "apiKey": "...", "siteId": "..." }
+{ "apiKey": "...", "siteId": "...", "backendUrl": "...", "appUrl": "..." }
 ```
 
 If missing or incomplete, stop and tell the user to run `npx waypoint-init` first.
@@ -42,7 +42,7 @@ import Script from "next/script";
 
 // Inside <body> of the root layout:
 <Script
-  src="https://cdn.waypoint.ai/waypoint.min.js"
+  src="{appUrl}/widget.js"
   data-key="{apiKey}"
   strategy="afterInteractive"
 />
@@ -52,7 +52,7 @@ import Script from "next/script";
 
 ```html
 <script
-  src="https://cdn.waypoint.ai/waypoint.min.js"
+  src="{appUrl}/widget.js"
   data-key="{apiKey}"
 ></script>
 ```
@@ -72,7 +72,7 @@ I will add the following to app/layout.tsx:
 
   Inside <body>:
   + <Script
-  +   src="https://cdn.waypoint.ai/waypoint.min.js"
+  +   src="{appUrl}/widget.js"
   +   data-key="wp_live_abc123"
   +   strategy="afterInteractive"
   + />

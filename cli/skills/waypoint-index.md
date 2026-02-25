@@ -9,10 +9,12 @@ You are the Waypoint indexer. Your job is to read the project source, build a st
 Read `.waypoint` from the project root:
 
 ```json
-{ "apiKey": "...", "siteId": "..." }
+{ "apiKey": "...", "siteId": "...", "backendUrl": "https://api.waypoint.ai" }
 ```
 
-If missing or incomplete, stop and tell the user to run `npx waypoint-init` first.
+If missing or if `apiKey`/`siteId` are absent, stop and tell the user to run `npx waypoint-init` first.
+
+`backendUrl` defaults to `https://api.waypoint.ai` if not present in the file.
 
 ---
 
@@ -50,7 +52,8 @@ For each route file, extract:
 | `route` | Derive URL path from file path (e.g. `app/pricing/page.tsx` → `/pricing`) |
 | `title` | Look for `<title>`, `metadata.title`, `export const metadata`, `<h1>`, or the filename |
 | `purpose` | One sentence — infer from component name, heading text, and prop/variable names |
-| `elements` | Interactive elements: buttons, links, forms — extract `label`, `selector`, `action` |
+| `summary` | 2-3 sentences covering: (1) what the page displays, (2) main actions available, (3) who it's for or when a user lands here |
+| `elements` | Interactive elements: buttons, links, forms — extract `label`, `selector`, `action`, and `risk` |
 
 For `elements`, focus on:
 - `<button>` and `<Button>` components — use their text content as `label`
@@ -58,6 +61,10 @@ For `elements`, focus on:
 - `<form>` — use its heading or submit button label
 - For `selector`: prefer `[aria-label="..."]`, `[data-testid="..."]`, or a stable CSS class. Fall back to text content.
 - For `action`: use `"click"` for buttons/links, `"submit"` for forms, `"navigate"` for nav links
+- For `risk`: annotate elements based on their label and context:
+  - `"high"`: label/context contains — delete, remove, cancel subscription, deactivate, unsubscribe, purchase, pay, checkout, confirm order, close account
+  - `"medium"`: label/context contains — save, update, submit (non-payment forms)
+  - Omit the field entirely for everything else (defaults to low risk)
 
 ---
 
@@ -71,9 +78,11 @@ Produce an array of route objects:
     "route": "/pricing",
     "title": "Pricing",
     "purpose": "Displays subscription plan options and lets users upgrade or downgrade.",
+    "summary": "Shows the three subscription tiers (Free, Pro, Enterprise) with feature comparisons. Users can upgrade directly or contact sales for Enterprise pricing. Typically visited when users want to change their plan or compare features.",
     "elements": [
-      { "label": "Upgrade to Pro", "selector": "[aria-label='Upgrade to Pro']", "action": "click" },
-      { "label": "Contact sales", "selector": "a[href='/contact']", "action": "navigate" }
+      { "label": "Upgrade to Pro", "selector": "[aria-label='Upgrade to Pro']", "action": "click", "risk": "high" },
+      { "label": "Contact sales", "selector": "a[href='/contact']", "action": "navigate" },
+      { "label": "Save preferences", "selector": "#save-prefs", "action": "click", "risk": "medium" }
     ]
   }
 ]
@@ -86,14 +95,15 @@ Produce an array of route objects:
 Send the payload:
 
 ```
-POST https://api.waypoint.ai/v1/sites/{siteId}/index
+POST {backendUrl}/v1/sites/{siteId}/index
 Authorization: Bearer {apiKey}
 Content-Type: application/json
 
 { "routes": [ ...array from step 5... ] }
 ```
 
-Replace `{siteId}` and `{apiKey}` with the values from `.waypoint`.
+Replace `{backendUrl}`, `{siteId}`, and `{apiKey}` with the values from `.waypoint`.
+Use `https://api.waypoint.ai` as `backendUrl` if the field is absent from the config.
 
 If the request fails, show the status code and error body, then stop.
 

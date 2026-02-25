@@ -1,4 +1,4 @@
-import { renderBubble, appendMessage, setLoading } from "./ui";
+import { renderBubble, appendMessage, setLoading, showConfirmation } from "./ui";
 import { sendMessage } from "./api";
 import { executeAction } from "./actions";
 
@@ -18,7 +18,8 @@ import { executeAction } from "./actions";
     return;
   }
 
-  let sessionId: string | null = null;
+  const STORAGE_KEY = `wp_session_${apiKey}`;
+  let sessionId: string | null = localStorage.getItem(STORAGE_KEY);
 
   async function handleSend(message: string): Promise<void> {
     appendMessage("user", message);
@@ -27,10 +28,11 @@ import { executeAction } from "./actions";
     try {
       const result = await sendMessage(backendUrl, apiKey!, sessionId, message);
       sessionId = result.sessionId;
+      localStorage.setItem(STORAGE_KEY, sessionId);
       setLoading(false);
       appendMessage("assistant", result.message);
       if (result.action && result.action.type !== "answer") {
-        executeAction(result.action);
+        await executeAction(result.action, showConfirmation);
       }
     } catch (err) {
       setLoading(false);

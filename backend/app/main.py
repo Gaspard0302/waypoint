@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import crawl, reindex, chat
+from app.routers import chat, index
 
 app = FastAPI(
     title="Waypoint API",
@@ -12,15 +12,14 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(crawl.router)
-app.include_router(reindex.router)
 app.include_router(chat.router)
+app.include_router(index.router, prefix="/v1")
 
 
 @app.get("/health")

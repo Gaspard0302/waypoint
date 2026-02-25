@@ -1,4 +1,6 @@
 const esbuild = require("esbuild");
+const fs = require("fs");
+const path = require("path");
 
 const isWatch = process.argv.includes("--watch");
 const isProd = process.env.NODE_ENV === "production";
@@ -20,7 +22,10 @@ if (isWatch) {
     console.log("[Waypoint] Watching for changes...");
   });
 } else {
+  const DIST_OUT = "dist/waypoint.min.js";
   esbuild.build(config).then(() => {
-    console.log(`[Waypoint] Build complete → dist/waypoint.min.js`);
+    console.log(`[Waypoint] Build complete → ${DIST_OUT}`);
+    fs.copyFileSync(DIST_OUT, path.resolve(__dirname, "../dashboard/public/widget.js"));
+    console.log("[Waypoint] Copied → dashboard/public/widget.js");
   });
 }

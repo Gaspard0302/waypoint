@@ -5,12 +5,13 @@ import { useState } from "react";
 interface Props {
   apiKey: string;
   backendUrl: string;
+  widgetUrl: string;
 }
 
-export default function ScriptTagBlock({ apiKey, backendUrl }: Props) {
+export default function ScriptTagBlock({ apiKey, backendUrl, widgetUrl }: Props) {
   const [copied, setCopied] = useState(false);
 
-  const scriptTag = `<script\n  src="https://cdn.waypoint.ai/waypoint.min.js"\n  data-key="${apiKey}"\n  data-backend="${backendUrl}"\n></script>`;
+  const scriptTag = `<script\n  src="${widgetUrl}"\n  data-key="${apiKey}"\n  data-backend="${backendUrl}"\n></script>`;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(scriptTag);

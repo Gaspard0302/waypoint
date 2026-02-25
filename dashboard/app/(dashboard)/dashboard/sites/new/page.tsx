@@ -33,7 +33,7 @@ export default function NewSitePage() {
   }
 
   return (
-    <div className="max-w-lg">
+    <div className="p-8 max-w-lg">
       <h1 className="mb-6 text-2xl font-semibold text-zinc-900">Add a site</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">

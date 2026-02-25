@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ScriptTagBlock from "./ScriptTagBlock";
-import CrawlHistory from "./CrawlHistory";
+import IndexStatus from "./IndexStatus";
 import SetupBlock from "./SetupBlock";
 
 interface Props {
@@ -23,16 +22,8 @@ export default async function SiteDetailPage({ params }: Props) {
     notFound();
   }
 
-  const { data: crawlJobs } = await supabase
-    .from("crawl_jobs")
-    .select("*")
-    .eq("site_id", id)
-    .order("created_at", { ascending: false });
-
-  // Check if we have any indexed pages
-  const hasIndex = crawlJobs?.some((j) => j.status === "done" || j.status === "running") ?? false;
-
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+  const widgetUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/widget.js`;
 
   return (
     <div className="p-8 max-w-2xl space-y-8">
@@ -58,28 +49,14 @@ export default async function SiteDetailPage({ params }: Props) {
       <div className="rounded-lg border border-zinc-200 bg-white p-5">
         <p className="text-sm font-medium text-zinc-700 mb-1">Manual widget install</p>
         <p className="text-xs text-zinc-400 mb-3">Or run <code className="font-mono">/waypoint-install</code> in your coding agent to do this automatically.</p>
-        <ScriptTagBlock apiKey={site.api_key} backendUrl={backendUrl} />
+        <ScriptTagBlock apiKey={site.api_key} backendUrl={backendUrl} widgetUrl={widgetUrl} />
       </div>
 
-      {/* Index history */}
+      {/* Index status */}
       <div className="rounded-lg border border-zinc-200 bg-white p-5 space-y-4">
-        <h2 className="text-sm font-medium text-zinc-900">Index history</h2>
-        <CrawlHistory siteId={site.id} initialJobs={crawlJobs ?? []} />
+        <h2 className="text-sm font-medium text-zinc-900">Index status</h2>
+        <IndexStatus siteId={site.id} />
       </div>
-
-      {/* Site Map link */}
-      {hasIndex && (
-        <Link
-          href={`/dashboard/sites/${id}/map`}
-          className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-5 hover:border-zinc-400 hover:shadow-sm transition-all group"
-        >
-          <div className="space-y-0.5">
-            <p className="text-sm font-medium text-zinc-900">Site Map</p>
-            <p className="text-xs text-zinc-400">Interactive tree of all indexed pages</p>
-          </div>
-          <span className="text-zinc-300 group-hover:text-zinc-600 transition-colors text-lg">→</span>
-        </Link>
-      )}
     </div>
   );
 }

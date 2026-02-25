@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter
 
@@ -20,7 +21,7 @@ async def chat(req: ChatRequest):
         session_res = db.table("sessions").select("id").eq("id", req.session_id).eq("site_id", site["id"]).maybe_single().execute()
         if session_res.data:
             session_id = req.session_id
-            db.table("sessions").update({"last_active": "now()"}).eq("id", session_id).execute()
+            db.table("sessions").update({"last_active": datetime.now(timezone.utc).isoformat()}).eq("id", session_id).execute()
         else:
             # Session not found, create new
             session_id = None
@@ -31,15 +32,15 @@ async def chat(req: ChatRequest):
         }).execute()
         session_id = new_session.data[0]["id"]
 
+    # Get action from agent (history fetch happens before current message is stored)
+    action = await get_action(site["id"], req.message, session_id, page_context=req.page_context)
+
     # Store user message
     db.table("messages").insert({
         "session_id": session_id,
         "role": "user",
         "content": req.message,
     }).execute()
-
-    # Get action from agent
-    action = await get_action(site["id"], req.message)
 
     # Store assistant message
     db.table("messages").insert({
